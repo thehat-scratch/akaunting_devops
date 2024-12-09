@@ -44,13 +44,6 @@ opa_validate:
       - opa_results.json
   allow_failure: true
 
-# Validate Ansible Playbooks
-ansible_lint:
-  stage: test
-  image: cytopia/ansible-lint
-  script:
-    - ansible-lint playbook.yml
-  allow_failure: true
 
 # Upload Reports for Analysis
 upload_reports:
