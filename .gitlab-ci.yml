@@ -1,73 +1,111 @@
-variables:
-  IMAGE_NAME: akaunting/akaunting
-  IMAGE_TAG: akaunting-1.0
-
 stages:
+  - cache
   - test
-  - security
-  - build
+  - check_secret
+  - build_image
+  - terraform
+  - ansible
+  - scan_image
+  - analyze_code
+  - centralize_logs
 
-# Test Terraform configurations with Terrascan
+variables:
+  DOCKER_USER: $DOCKER_USER
+  DOCKER_PASSWORD: $DOCKER_PASSWORD
+
+composer_cache:
+  image: php:8.2
+  stage: cache
+  script:
+    - curl -sS https://getcomposer.org/installer | php
+    - php composer.phar install --prefer-dist --no-scripts --no-dev
+  cache:
+    key:
+      files:
+        - composer.lock
+    paths:
+      - vendor/
+      - composer.lock
+
+php_test:
+  image: php:8.2
+  stage: test
+  before_script:
+    - apt-get update && apt-get install -y unzip
+    - curl -sS https://getcomposer.org/installer | php
+    - php composer.phar install
+  script:
+    - ./vendor/bin/phpunit --testdox
+  cache:
+    key:
+      files:
+        - composer.lock
+    paths:
+      - vendor/
+      - composer.lock
+
+gitleaks:
+  image:
+    name: zricethezav/gitleaks
+    entrypoint: [""]
+  stage: check_secret
+  script:
+    - gitleaks detect --verbose --source . --report-format json --report-path gitleaks.json
+  artifacts:
+    when: always
+    paths:
+      - gitleaks.json
+  allow_failure: true
+
+terraform_validate:
+  image: hashicorp/terraform:latest
+  stage: terraform
+  script:
+    - terraform init
+    - terraform validate
+    - terraform plan -out=plan.tfplan
+  artifacts:
+    when: always
+    paths:
+      - plan.tfplan
+  allow_failure: false
+
 terrascan:
-  stage: test
-  image: accurics/terrascan
+  image: accurics/terrascan:latest
+  stage: terraform
   script:
-    - terrascan init
-    - terrascan scan --config-only --output json > terrascan.json
-  artifacts:
-    when: always
-    paths:
-      - terrascan.json
+    - terrascan scan -d .
   allow_failure: true
 
-# Test Infrastructure as Code with Checkov
-checkov:
-  stage: test
-  image: bridgecrew/checkov
-  script:
-    - checkov --directory . --output-file-path checkov.json
-  artifacts:
-    when: always
-    paths:
-      - checkov.json
-  allow_failure: true
+#ansible_deploy:
+ # image: williamyeh/ansible:alpine3
+  #stage: ansible
+  #script:
+   # - ansible --version
+    #- ansible-playbook -i inventory.yml playbook.yml
+  #artifacts:
+   # when: always
+    #paths:
+     # - ansible.log
+  #allow_failure: false
 
-# Open Policy Agent (OPA) Policy Validation
-opa_validate:
-  stage: security
-  image: openpolicyagent/opa
-  script:
-    - opa test . -v > opa_results.json
-  artifacts:
-    when: always
-    paths:
-      - opa_results.json
-  allow_failure: true
-
-
-# Upload Reports for Analysis
-upload_reports:
-  stage: test
-  image: python
-  needs: ['terrascan', 'checkov', 'opa_validate']
-  before_script:
-    - pip3 install requests
-  script:
-    - python3 upload-report.py terrascan.json
-    - python3 upload-report.py checkov.json
-    - python3 upload-report.py opa_results.json
-
-# Build and Push Docker Image
 build_image:
-  stage: build
+  stage: build_image
   image: docker:24
-  variables:
-    DOCKER_USER: $DOCKER_USER
-    DOCKER_PASS: $DOCKER_PASS
+  when: always
   services:
-    - docker:24-docker:24-dind
+    - docker:24-dind
   before_script:
-    - echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+    - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USER" --password-stdin
   script:
-    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
-    - docker push $IMAGE_NAME:$IMAGE_TAG
+    - docker build -t /akaunting-app:v1 .
+    - docker push userwater123/akaunting-app:v1
+
+trivy_scan:
+  image: aquasec/trivy:latest
+  stage: scan_image
+  script:
+    - trivy image --exit-code 1 --severity HIGH,CRITICAL userwater123/akaunting-app:v1
+  allow_failure: false
+
+   
