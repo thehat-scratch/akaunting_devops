@@ -29,33 +29,43 @@ resource "docker_container" "akaunting_app" {
   }
 }
 
-# Optional: Database container (MySQL example)
+# Docker image for MySQL database
 resource "docker_image" "mysql_image" {
   name = "mysql:8.0"
 }
 
+# Docker container for MySQL database
 resource "docker_container" "mysql_db" {
   name  = "akaunting-db"
   image = docker_image.mysql_image.name
+  
+  # Avoid hardcoding sensitive information directly in the configuration
   env = [
-    "MYSQL_ROOT_PASSWORD=rootpassword",
+    "MYSQL_ROOT_PASSWORD=${var.mysql_root_password}",
     "MYSQL_DATABASE=akaunting",
     "MYSQL_USER=akaunting_user",
-    "MYSQL_PASSWORD=userpassword"
+    "MYSQL_PASSWORD=${var.mysql_user_password}"
   ]
+
   networks_advanced {
     name = docker_network.akaunting_network.name
   }
 
-  # Remove the 'volumes' block as requested
-  # volumes {
-  #   container_path = "/var/lib/mysql"
-  #   host_path      = "/path/to/mysql/data"  # This line is removed
-  # }
-
-  # You can use a Docker volume instead if needed, here's how:
+  # Optional: Docker volume for persistent data (if needed)
+  # Uncomment and configure as required
   # volumes {
   #   container_path = "/var/lib/mysql"
   #   volume_name    = "mysql_data"
   # }
+}
+
+# Variables for sensitive data
+variable "mysql_root_password" {
+  description = "The root password for the MySQL database"
+  type        = string
+}
+
+variable "mysql_user_password" {
+  description = "The password for the MySQL user"
+  type        = string
 }
