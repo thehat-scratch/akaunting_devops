@@ -70,7 +70,7 @@ terraform:
     - main
 
 terrascan:
-  image: accurics/terrascan:latest
+  image: tenable/terrascan:latest
   stage: terraform
   script:
     - terrascan scan -d ${TF_WORKING_DIR}  # Scan the terraform directory
@@ -94,7 +94,7 @@ opa_policy_check:
   allow_failure: false
 
 trivy_scan:
-  image: aquasec/trivy:latest
+  image: bitnami/trivy:latest
   stage: scan_image
   script:
     - trivy image --exit-code 1 --severity HIGH,CRITICAL hicham2004/akaunting-app:v1
