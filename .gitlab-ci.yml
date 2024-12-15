@@ -62,16 +62,12 @@ checkov:
   allow_failure: false
 
 opa_policy_check:
-  image: 
-    name: openpolicyagent/opa:latest
-    entrypoint: ["/bin/sh", "-c"]  # Use explicit shell
+  image: alpine:latest  # Use an alpine base image with shell
   stage: security_policy_check
   script:
+    - apk add --no-cache openpolicyagent
     - echo "Running OPA policy checks..."
     - opa eval --data policies.rego --input input.json --fail-defined
-  before_script:
-    - echo 'Ensure your "policies.rego" and "input.json" are added to the repository'
-  allow_failure: false
 
 upload_artifacts:
   stage: upload_artifacts
