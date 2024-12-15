@@ -55,17 +55,19 @@ variables:
 checkov:
   image:
     name: bridgecrew/checkov:latest
-    entrypoint: [""]  # Disable the default entrypoint
+    entrypoint: [""]  
   stage: security_policy_check
   script:
-    - checkov --directory "${TF_WORKING_DIR}"  # Run Checkov against the Terraform directory
+    - checkov --directory "${TF_WORKING_DIR}" 
   allow_failure: false
 
 opa_policy_check:
-  image: openpolicyagent/opa:latest
+  image: 
+    name: openpolicyagent/opa:latest
+    entrypoint: [""]
+  stage: security_policy_check
   script:
     - opa eval --data policies.rego --input input.json --fail-defined
-  stage: security_policy_check
   allow_failure: false
 
 upload_artifacts:
