@@ -64,7 +64,7 @@ checkov:
 opa_policy_check:
   image: 
     name: openpolicyagent/opa:latest
-    entrypoint: [""]
+    entrypoint: ["/bin/sh", "-c"]  # Use explicit shell
   stage: security_policy_check
   script:
     - echo "Running OPA policy checks..."
