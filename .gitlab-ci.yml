@@ -53,7 +53,9 @@ before_script:
 #   allow_failure: false
 
 checkov:
-  image: bridgecrew/checkov:latest
+  image:
+    name: bridgecrew/checkov:latest
+    entrypoint: [""]  # Disable the default entrypoint
   stage: security_policy_check
   script:
     - checkov --directory "${TF_WORKING_DIR}"  # Run Checkov against the Terraform directory
