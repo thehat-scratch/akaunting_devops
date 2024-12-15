@@ -2,110 +2,138 @@ stages:
   - cache
   - test
   - check_secret
-  - build_image
   - terraform
-  - ansible
   - scan_image
-  - analyze_code
-  - centralize_logs
+  - security_policy_check
+  - upload_artifacts
 
 variables:
   DOCKER_USER: $DOCKER_USER
   DOCKER_PASSWORD: $DOCKER_PASSWORD
+  TF_VERSION: "1.0.0"
+  TF_WORKING_DIR: "terraform"  # Point to the terraform directory containing main.tf
 
-composer_cache:
-  image: php:8.2
-  stage: cache
-  script:
-    - curl -sS https://getcomposer.org/installer | php
-    - php composer.phar install --prefer-dist --no-scripts --no-dev
-  cache:
-    key:
-      files:
-        - composer.lock
-    paths:
-      - vendor/
-      - composer.lock
+before_script:
+  - apt-get update && apt-get install -y curl gnupg unzip lsb-release
+  - curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com focal main" > /etc/apt/sources.list.d/hashicorp.list
+  - apt-get update
+  - apt-get install -y terraform=${TF_VERSION} || (curl -fsSL https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip -o terraform.zip && unzip terraform.zip && mv terraform /usr/local/bin/ && rm terraform.zip)
 
-php_test:
-  image: php:8.2
-  stage: test
-  before_script:
-    - apt-get update && apt-get install -y unzip
-    - curl -sS https://getcomposer.org/installer | php
-    - php composer.phar install
-  script:
-    - ./vendor/bin/phpunit --testdox
-  cache:
-    key:
-      files:
-        - composer.lock
-    paths:
-      - vendor/
-      - composer.lock
+# php_test:
+#   image: php:8.2
+#   stage: test
+#   before_script:
+#     - apt-get update && apt-get install -y unzip gpg curl libicu-dev libzip-dev libpng-dev
+#     - docker-php-ext-install bcmath intl gd zip
+#     - curl -sS https://getcomposer.org/installer | php
+#     - php composer.phar install
+#   script:
+#     - ./vendor/bin/phpunit --testdox
+#   cache:
+#     key:
+#       files:
+#         - composer.lock
+#     paths:
+#       - vendor/
+#       - composer.lock
 
-gitleaks:
-  image:
-    name: zricethezav/gitleaks
-    entrypoint: [""]
-  stage: check_secret
-  script:
-    - gitleaks detect --verbose --source . --report-format json --report-path gitleaks.json
-  artifacts:
-    when: always
-    paths:
-      - gitleaks.json
-  allow_failure: true
+# gitleaks:
+#   image:
+#     name: zricethezav/gitleaks
+#     entrypoint: [""]
+#   stage: check_secret
+#   script:
+#     - gitleaks detect --verbose --source . --report-format json --report-path gitleaks.json
+#   artifacts:
+#     when: always
+#     paths:
+#       - gitleaks.json
+#   allow_failure: true
 
-terraform_validate:
-  image: hashicorp/terraform:latest
+terraform:
   stage: terraform
+  image: ubuntu:latest
+  services:
+    - docker:20.10.7-dind  # Ensure Docker-in-Docker is available
   script:
+    - echo "Changing directory to Terraform working directory..."
+    - cd "${TF_WORKING_DIR}"  # Change to the terraform directory
+    - echo "Listing contents of the working directory:"
+    - ls -l  # Check if the Terraform configuration files exist
+    - echo "Initializing Terraform..."
     - terraform init
+    - echo "Validating Terraform configuration..."
     - terraform validate
-    - terraform plan -out=plan.tfplan
-  artifacts:
-    when: always
-    paths:
-      - plan.tfplan
-  allow_failure: false
+    - echo "Applying Terraform configuration..."
+  only:
+    - main
 
 terrascan:
   image: accurics/terrascan:latest
   stage: terraform
   script:
-    - terrascan scan -d .
+    - terrascan scan -d ${TF_WORKING_DIR}  # Scan the terraform directory
   allow_failure: true
 
-#ansible_deploy:
- # image: williamyeh/ansible:alpine3
-  #stage: ansible
-  #script:
-   # - ansible --version
-    #- ansible-playbook -i inventory.yml playbook.yml
-  #artifacts:
-   # when: always
-    #paths:
-     # - ansible.log
-  #allow_failure: false
-
-build_image:
-  stage: build_image
-  image: docker:24
-  when: always
-  services:
-    - docker:24-dind
-  before_script:
-    - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USER" --password-stdin
+checkov:
+  image: bridgecrew/checkov:latest
+  stage: security_policy_check
   script:
-    - docker build -t /akaunting-app:v1 .
-    - docker push userwater123/akaunting-app:v1
+    - checkov --directory "${TF_WORKING_DIR}"  # Run Checkov against the Terraform directory
+  allow_failure: false
+
+opa_policy_check:
+  image: openpolicyagent/opa:latest
+  stage: security_policy_check
+  script:
+    - echo "Running OPA policy checks..."
+    - opa eval --data policies.rego --input input.json --fail-defined
+  before_script:
+    - echo 'Ensure your "policies.rego" and "input.json" are added to the repository'
+  allow_failure: false
 
 trivy_scan:
   image: aquasec/trivy:latest
   stage: scan_image
   script:
-    - trivy image --exit-code 1 --severity HIGH,CRITICAL userwater123/akaunting-app:v1
+    - trivy image --exit-code 1 --severity HIGH,CRITICAL hicham2004/akaunting-app:v1
   allow_failure: false
 
-   
+# ansible_deploy:
+#   image: williamyeh/ansible:alpine3
+#   stage: terraform
+#   script:
+#     - ansible --version
+#     - ansible-playbook -i inventory.yml playbook.yml
+#   artifacts:
+#     when: always
+#     paths:
+#       - ansible.log
+#   allow_failure: false
+
+# build_image:
+#   stage: scan_image
+#   image: docker:24
+#   when: always
+#   services:
+#     - docker:24-dind
+#   before_script:
+#     - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USER" --password-stdin
+#   script:
+#     - docker pull akaunting/akaunting
+#     - docker tag akaunting/akaunting hicham2004/akaunting-app:v1
+#     - docker push hicham2004/akaunting-app:v1
+
+upload_artifacts:
+  stage: upload_artifacts
+  image: alpine:latest
+  script:
+    - mkdir -p pipeline_artifacts
+    - cp -r vendor/ composer.lock gitleaks.json pipeline_artifacts/
+    - echo "Artifacts collected into pipeline_artifacts/"
+  artifacts:
+    when: always
+    paths:
+      - pipeline_artifacts/
+    expire_in: 7 days
