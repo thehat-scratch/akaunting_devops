@@ -20,61 +20,37 @@ before_script:
   - apt-get update
   - apt-get install -y terraform=${TF_VERSION} || (curl -fsSL https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip -o terraform.zip && unzip terraform.zip && mv terraform /usr/local/bin/ && rm terraform.zip)
 
-# php_test:
-#   image: php:8.2
-#   stage: test
-#   before_script:
-#     - apt-get update && apt-get install -y unzip gpg curl libicu-dev libzip-dev libpng-dev
-#     - docker-php-ext-install bcmath intl gd zip
-#     - curl -sS https://getcomposer.org/installer | php
-#     - php composer.phar install
+# terraform:
+#   stage: terraform
+#   image: ubuntu:latest
+#   services:
+#     - docker:20.10.7-dind  # Ensure Docker-in-Docker is available
 #   script:
-#     - ./vendor/bin/phpunit --testdox
-#   cache:
-#     key:
-#       files:
-#         - composer.lock
-#     paths:
-#       - vendor/
-#       - composer.lock
+#     - echo "Changing directory to Terraform working directory..."
+#     - cd "${TF_WORKING_DIR}"  # Change to the terraform directory
+#     - echo "Listing contents of the working directory:"
+#     - ls -l  # Check if the Terraform configuration files exist
+#     - echo "Initializing Terraform..."
+#     - terraform init
+#     - echo "Validating Terraform configuration..."
+#     - terraform validate
+#     - echo "Applying Terraform configuration..."
+#   only:
+#     - main
 
-# gitleaks:
-#   image:
-#     name: zricethezav/gitleaks
-#     entrypoint: [""]
-#   stage: check_secret
+# terrascan:
+#   image: tenable/terrascan:latest
+#   stage: terraform
 #   script:
-#     - gitleaks detect --verbose --source . --report-format json --report-path gitleaks.json
-#   artifacts:
-#     when: always
-#     paths:
-#       - gitleaks.json
+#     - terrascan scan -d ${TF_WORKING_DIR}  # Scan the terraform directory
 #   allow_failure: true
 
-terraform:
-  stage: terraform
-  image: ubuntu:latest
-  services:
-    - docker:20.10.7-dind  # Ensure Docker-in-Docker is available
-  script:
-    - echo "Changing directory to Terraform working directory..."
-    - cd "${TF_WORKING_DIR}"  # Change to the terraform directory
-    - echo "Listing contents of the working directory:"
-    - ls -l  # Check if the Terraform configuration files exist
-    - echo "Initializing Terraform..."
-    - terraform init
-    - echo "Validating Terraform configuration..."
-    - terraform validate
-    - echo "Applying Terraform configuration..."
-  only:
-    - main
-
-terrascan:
-  image: tenable/terrascan:latest
-  stage: terraform
-  script:
-    - terrascan scan -d ${TF_WORKING_DIR}  # Scan the terraform directory
-  allow_failure: true
+# trivy_scan:
+#   image: bitnami/trivy:latest
+#   stage: scan_image
+#   script:
+#     - trivy image --exit-code 1 --severity HIGH,CRITICAL hicham2004/akaunting-app:v1
+#   allow_failure: false
 
 checkov:
   image: bridgecrew/checkov:latest
@@ -92,38 +68,6 @@ opa_policy_check:
   before_script:
     - echo 'Ensure your "policies.rego" and "input.json" are added to the repository'
   allow_failure: false
-
-trivy_scan:
-  image: bitnami/trivy:latest
-  stage: scan_image
-  script:
-    - trivy image --exit-code 1 --severity HIGH,CRITICAL hicham2004/akaunting-app:v1
-  allow_failure: false
-
-# ansible_deploy:
-#   image: williamyeh/ansible:alpine3
-#   stage: terraform
-#   script:
-#     - ansible --version
-#     - ansible-playbook -i inventory.yml playbook.yml
-#   artifacts:
-#     when: always
-#     paths:
-#       - ansible.log
-#   allow_failure: false
-
-# build_image:
-#   stage: scan_image
-#   image: docker:24
-#   when: always
-#   services:
-#     - docker:24-dind
-#   before_script:
-#     - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USER" --password-stdin
-#   script:
-#     - docker pull akaunting/akaunting
-#     - docker tag akaunting/akaunting hicham2004/akaunting-app:v1
-#     - docker push hicham2004/akaunting-app:v1
 
 upload_artifacts:
   stage: upload_artifacts
