@@ -15,10 +15,13 @@
         - gnupg
         - unzip
 
-    - name: Add HashiCorp GPG key
-      command: >
-        curl -fsSL https://apt.releases.hashicorp.com/gpg -o /tmp/hashicorp.gpg && 
-        gpg --dearmor /tmp/hashicorp.gpg -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    - name: Add HashiCorp GPG key (curl)
+      command: curl -fsSL https://apt.releases.hashicorp.com/gpg -o /tmp/hashicorp.gpg
+      args:
+        creates: /tmp/hashicorp.gpg
+
+    - name: Convert GPG key to appropriate format
+      command: gpg --dearmor /tmp/hashicorp.gpg -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
       args:
         creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
 
