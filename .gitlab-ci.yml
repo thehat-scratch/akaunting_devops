@@ -67,7 +67,8 @@ opa_policy_check:
     - apk add --no-cache git
     - go install github.com/open-policy-agent/opa@latest
   script:
-    - opa eval --data policies.rego --input input.json --fail-defined
+    - echo "Running OPA policy checks..."
+    - opa eval --data policies.rego --input input.json --fail-defined 'data.example.allow'
   stage: security_policy_check
   allow_failure: false
 
