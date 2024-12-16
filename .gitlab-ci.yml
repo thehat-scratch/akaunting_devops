@@ -18,7 +18,7 @@ ansible_deploy:
   image: williamyeh/ansible:alpine3
   stage: ansible
   script:
-    - ansible-playbook -i localhost, playbook.yml
+    - ansible-playbook -i localhost, ./ansible_playbook/playbook.yml
   artifacts:
     when: always
     paths:
