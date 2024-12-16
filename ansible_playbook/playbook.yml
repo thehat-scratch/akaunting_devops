@@ -21,7 +21,7 @@
         creates: /tmp/hashicorp.gpg
 
     - name: Convert GPG key to appropriate format
-      command: gpg --dearmor /tmp/hashicorp.gpg -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+      shell: gpg --dearmor /tmp/hashicorp.gpg -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
       args:
         creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
 
