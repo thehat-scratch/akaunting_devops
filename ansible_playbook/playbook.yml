@@ -2,6 +2,10 @@
 - name: CI/CD Pipeline Setup with Ansible
   hosts: localhost
   tasks:
+    - name: Update APK cache
+      apk:
+        update_cache: yes
+
     - name: Install necessary packages
       apk:
         name: "{{ item }}"
@@ -10,7 +14,6 @@
         - curl
         - gnupg
         - unzip
-        - lsb-release
 
     - name: Add HashiCorp GPG key
       command: curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
@@ -21,11 +24,7 @@
       copy:
         content: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com focal main"
         dest: /etc/apt/sources.list.d/hashicorp.list
-      when: false  # Not needed for Alpine, kept for reference if switching to a Debian-based image
-
-    - name: Update APK cache
-      apk:
-        update_cache: yes
+      when: false  # Not needed for Alpine
 
     - name: Install Terraform using APK (if available)
       apk:
