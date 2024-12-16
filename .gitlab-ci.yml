@@ -68,7 +68,7 @@ opa_policy_check:
     - go install github.com/open-policy-agent/opa@latest
   script:
     - echo "Running OPA policy checks..."
-    - opa eval --data policies.rego --input ./policies/input.json --fail-defined 'data.example.allow'
+    - opa eval --data ./policies/policies.rego --input ./policies/input.json --fail-defined 'data.example.allow'
   stage: security_policy_check
   allow_failure: false
 
