@@ -22,7 +22,7 @@ ansible_deploy:
   artifacts:
     when: always
     paths:
-      - ansible.log
+      - ./ansible_playbook/ansible.log
   allow_failure: false
 
 # Commented out "before_script" as per request.
