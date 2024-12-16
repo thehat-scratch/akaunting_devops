@@ -10,34 +10,38 @@
       apk:
         name: "{{ item }}"
         state: present
-      with_items:
+      loop:
         - curl
         - gnupg
         - unzip
 
     - name: Add HashiCorp GPG key (curl)
-      command: curl -fsSL https://apt.releases.hashicorp.com/gpg -o /tmp/hashicorp.gpg
+      command: >
+        curl -fsSL https://apt.releases.hashicorp.com/gpg -o /tmp/hashicorp.gpg
       args:
         creates: /tmp/hashicorp.gpg
 
     - name: Convert GPG key to appropriate format
-      shell: gpg --dearmor /tmp/hashicorp.gpg -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+      shell: gpg --dearmor < /tmp/hashicorp.gpg > /usr/share/keyrings/hashicorp-archive-keyring.gpg
       args:
         creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
 
-    - name: Add HashiCorp APT repository (for future installs)
+    - name: Add HashiCorp APT repository
       copy:
         content: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com focal main"
         dest: /etc/apt/sources.list.d/hashicorp.list
-      when: false  # Not needed for Alpine
 
-    - name: Install Terraform using APK (if available)
-      apk:
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+
+    - name: Install Terraform
+      apt:
         name: terraform
         state: present
       ignore_errors: yes
 
-    - name: Manually install Terraform if APK install fails
+    - name: Manually install Terraform if APT install fails
       block:
         - name: Download Terraform binary
           get_url:
