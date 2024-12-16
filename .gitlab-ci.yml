@@ -69,7 +69,7 @@ opa_policy_check:
   script:
     - echo "Running OPA policy checks..."
     - ls ./policies/  # List files to verify the location
-    - opa eval --data ./policies/policy.rego --input ./policies/input.json --fail-defined 'data.example.allow'
+    - opa eval --data policy.rego --input ./policies/input.json --fail-defined 'data.example.allow'
   stage: security_policy_check
   allow_failure: false
 
