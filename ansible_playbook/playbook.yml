@@ -3,7 +3,7 @@
   hosts: localhost
   tasks:
     - name: Install necessary packages
-      apt:
+      apk:
         name: "{{ item }}"
         state: present
       with_items:
@@ -17,22 +17,23 @@
       args:
         creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
 
-    - name: Add HashiCorp APT repository
+    - name: Add HashiCorp APT repository (for future installs)
       copy:
         content: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com focal main"
         dest: /etc/apt/sources.list.d/hashicorp.list
+      when: false  # Not needed for Alpine, kept for reference if switching to a Debian-based image
 
-    - name: Update APT cache
-      apt:
+    - name: Update APK cache
+      apk:
         update_cache: yes
 
-    - name: Install Terraform
-      apt:
+    - name: Install Terraform using APK (if available)
+      apk:
         name: terraform
         state: present
       ignore_errors: yes
 
-    - name: Manually install Terraform if APT install fails
+    - name: Manually install Terraform if APK install fails
       block:
         - name: Download Terraform binary
           get_url:
@@ -52,8 +53,8 @@
       when: "'terraform' not in ansible_facts.packages"
 
     - name: Ensure Docker is installed
-      apt:
-        name: docker.io
+      apk:
+        name: docker
         state: present
 
     - name: Start and enable Docker service
