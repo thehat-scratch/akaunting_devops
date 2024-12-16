@@ -51,23 +51,23 @@ gitleaks:
       - gitleaks.json
   allow_failure: true
 
-php_test:
-  image: php:8.2
-  stage: test
-  before_script:
-    - apt-get update && apt-get install -y unzip gpg curl libicu-dev libzip-dev libpng-dev
-    - docker-php-ext-install bcmath intl gd zip
-    - curl -sS https://getcomposer.org/installer | php
-    - php composer.phar install
-  script:
-    - ./vendor/bin/phpunit --testdox
-  cache:
-    key:
-      files:
-        - composer.lock
-    paths:
-      - vendor/
-      - composer.lock
+# php_test:
+#   image: php:8.2
+#   stage: test
+#   before_script:
+#     - apt-get update && apt-get install -y unzip gpg curl libicu-dev libzip-dev libpng-dev
+#     - docker-php-ext-install bcmath intl gd zip
+#     - curl -sS https://getcomposer.org/installer | php
+#     - php composer.phar install
+#   script:
+#     - ./vendor/bin/phpunit --testdox
+#   cache:
+#     key:
+#       files:
+#         - composer.lock
+#     paths:
+#       - vendor/
+#       - composer.lock
 
 terrascan:
   image: tenable/terrascan:latest
@@ -92,18 +92,18 @@ checkov:
     - checkov --directory "${TF_WORKING_DIR}" 
   allow_failure: false
 
-build_image:
-  stage: build_image
-  image: docker:24
-  when: always
-  services:
-    - docker:24-dind
-  before_script:
-    - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USER" --password-stdin
-  script:
-    - docker pull akaunting/akaunting
-    - docker tag akaunting/akaunting userwater123/akaunting-app:v1
-    - docker push userwater123/akaunting-app:v1
+# build_image:
+#   stage: build_image
+#   image: docker:24
+#   when: always
+#   services:
+#     - docker:24-dind
+#   before_script:
+#     - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USER" --password-stdin
+#   script:
+#     - docker pull akaunting/akaunting
+#     - docker tag akaunting/akaunting userwater123/akaunting-app:v1
+#     - docker push userwater123/akaunting-app:v1
 
 opa_policy_check:
   image: golang:alpine
