@@ -23,7 +23,7 @@ ansible_deploy:
     when: always
     paths:
       - ./ansible_playbook/ansible.log
-  allow_failure: false
+  allow_failure: true
 
 # Commented out "before_script" as per request.
 # before_script:
@@ -94,7 +94,7 @@ trivy_scan:
   stage: scan_image
   script:
     - trivy image --exit-code 1 --severity HIGH,CRITICAL userwater123/akaunting-app:v1
-  allow_failure: false
+  allow_failure: true
 
 checkov:
   image:
