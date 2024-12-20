@@ -1,8 +1,8 @@
 stages:
+  - test
   - terraform
   - check_secret
   - build_image
-  - test
   - security_policy_check
 
 variables:
@@ -50,23 +50,23 @@ gitleaks:
       - gitleaks.json
   allow_failure: true
 
-# php_test:
-#   image: php:8.2
-#   stage: test
-#   before_script:
-#     - apt-get update && apt-get install -y unzip gpg curl libicu-dev libzip-dev libpng-dev
-#     - docker-php-ext-install bcmath intl gd zip
-#     - curl -sS https://getcomposer.org/installer | php
-#     - php composer.phar install
-#   script:
-#     - ./vendor/bin/phpunit --testdox
-#   cache:
-#     key:
-#       files:
-#         - composer.lock
-#     paths:
-#       - vendor/
-#       - composer.lock
+php_test:
+   image: php:8.2
+   stage: test
+   before_script:
+     - apt-get update && apt-get install -y unzip gpg curl libicu-dev libzip-dev libpng-dev
+     - docker-php-ext-install bcmath intl gd zip
+     - curl -sS https://getcomposer.org/installer | php
+     - php composer.phar install
+   script:
+     - ./vendor/bin/phpunit --testdox
+   cache:
+     key:
+       files:
+         - composer.lock
+     paths:
+       - vendor/
+       - composer.lock
 
 terrascan:
   stage: terraform
