@@ -1,9 +1,9 @@
 stages:
   - ansible
+  - terraform
+  - check_secret
   - build_image
   - test
-  - check_secret
-  - terraform
   - scan_image
   - security_policy_check
   - upload_artifacts
@@ -83,6 +83,7 @@ gitleaks:
 #       - composer.lock
 
 terrascan:
+  stage: terraform
   before_script:
     - apt update && apt install -y curl tar  # Ensure curl and tar are installed
     - |
