@@ -25,13 +25,13 @@ ansible_deploy:
       - ./ansible_playbook/ansible.log
   allow_failure: true
 
-# Commented out "before_script" as per request.
-# before_script:
-#   - apt-get update && apt-get install -y curl gnupg unzip lsb-release
-#   - curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-#   - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com focal main" > /etc/apt/sources.list.d/hashicorp.list
-#   - apt-get update
-#   - apt-get install -y terraform=${TF_VERSION} || (curl -fsSL https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip -o terraform.zip && unzip terraform.zip && mv terraform /usr/local/bin/ && rm terraform.zip)
+
+before_script:
+  - apt-get update && apt-get install -y curl gnupg unzip lsb-release
+  - curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+   - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com focal main" > /etc/apt/sources.list.d/hashicorp.list
+   - apt-get update
+   - apt-get install -y terraform=${TF_VERSION} || (curl -fsSL https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip -o terraform.zip && unzip terraform.zip && mv terraform /usr/local/bin/ && rm terraform.zip)
 
 terraform:
   stage: terraform
