@@ -91,7 +91,7 @@ terrascan:
       mv terrascan /usr/local/bin/terrascan  # Move the terrascan binary to /usr/local/bin
       rm terrascan.tar.gz  # Clean up the downloaded tar file
   script:
-    - terrascan scan -d . --iac-type docker # Run the terrascan scan on docker files
+    - terrascan scan -d /builds/kingwarzone35/akaunting/terraform/main.tf --iac-type terraform # Run the terrascan scan on docker files
 
 
 
