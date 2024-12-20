@@ -83,11 +83,22 @@ gitleaks:
 #       - composer.lock
 
 terrascan:
-  image: tenable/terrascan:latest
-  stage: terraform
+  stage: test 
+  services:
+     - docker:20.10.7-dind
+  before_script:
+    - apt update && apt install -y curl tar  # Ensure curl and tar are installed
+    - |
+      # Get the latest release URL for Terrascan, download, and extract it
+      curl -L "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E 'https://.+?_Darwin_x86_64.tar.gz')" -o terrascan.tar.gz
+      tar -xzf terrascan.tar.gz terrascan
+      mv terrascan /usr/local/bin/terrascan  # Move the terrascan binary to /usr/local/bin
+      rm terrascan.tar.gz  # Clean up the downloaded tar file
   script:
-    - terrascan scan -d ${TF_WORKING_DIR}  # Scan the terraform directory
-  allow_failure: true
+    - terrascan scan -d ${TF_WORKING_DIR}  # Run the terrascan scan
+
+
+
 
 trivy_scan:
   image: bitnami/trivy:latest
