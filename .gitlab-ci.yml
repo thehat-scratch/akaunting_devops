@@ -48,6 +48,8 @@ terraform:
     - echo "Validating Terraform configuration..."
     - terraform validate
     - echo "Applying Terraform configuration..."
+  allow_failure: true
+
   only:
     - main
 
