@@ -1,6 +1,6 @@
 stages:
-  - test
   - terraform
+  - test
   - check_secret
   - build_image
   - security_policy_check
@@ -32,6 +32,7 @@ terraform:
     - echo "Validating Terraform configuration..."
     - terraform validate
     - echo "Applying Terraform configuration..."
+    - terraform apply
   allow_failure: true
   only:
     - main
