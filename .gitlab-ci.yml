@@ -35,7 +35,7 @@ terraform:
     - echo "Validating Terraform configuration..."
     - terraform validate
     - echo "Applying Terraform configuration..."
-    - terraform apply -var="mysql_root_password=$TF_VAR_mysql_root_password" -var="mysql_user_password=$TF_VAR_mysql_user_password"
+    - terraform apply -auto-approve -var="mysql_root_password=$TF_VAR_mysql_root_password" -var="mysql_user_password=$TF_VAR_mysql_user_password"
   allow_failure: true
   only:
     - main
