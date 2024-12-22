@@ -2,13 +2,13 @@ terraform {
   required_providers {
     docker = {
       source  = "kreuzwerker/docker"
-      version = "~> 2.0"  # Specify the desired version
+      version = "~> 2.0"
     }
   }
 }
 
 provider "docker" {
-  host = "unix:///var/run/docker.sock"  # Docker socket for local environment
+  host = var.docker_host  # Dynamically set the Docker host
 }
 
 # Docker network
@@ -59,7 +59,13 @@ resource "docker_container" "mysql_db" {
   # }
 }
 
-# Variables for sensitive data
+# Variables for Docker host and sensitive data
+variable "docker_host" {
+  description = "The Docker host URL"
+  type        = string
+  default     = "unix:///var/run/docker.sock"  # Default for local environments
+}
+
 variable "mysql_root_password" {
   description = "The root password for the MySQL database"
   type        = string
