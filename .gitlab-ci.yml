@@ -59,7 +59,7 @@ php_test:
      - curl -sS https://getcomposer.org/installer | php
      - php composer.phar install
    script:
-     - ./vendor/bin/phpunit --testdox || true
+     - ./vendor/bin/phpunit --testdox || true #adding true to handle error after scanning
    cache:
      key:
        files:
