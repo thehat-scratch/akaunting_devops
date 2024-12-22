@@ -9,7 +9,9 @@ variables:
   DOCKER_USER: $DOCKER_USER
   DOCKER_PASSWORD: $DOCKER_PASSWORD
   TF_VERSION: "1.0.0"
-  TF_WORKING_DIR: "terraform"  # Point to the terraform directory containing main.tf
+  TF_WORKING_DIR: "terraform" 
+  TF_VAR_mysql_root_password: $TF_VAR_mysql_root_password
+  TF_VAR_mysql_user_password: $TF_VAR_mysql_user_password 
 
 terraform:
   stage: terraform
@@ -32,7 +34,7 @@ terraform:
     - echo "Validating Terraform configuration..."
     - terraform validate
     - echo "Applying Terraform configuration..."
-    - terraform apply
+    - terraform apply -var="mysql_root_password=$TF_VAR_mysql_root_password" -var="mysql_user_password=$TF_VAR_mysql_user_password"
   allow_failure: true
   only:
     - main
