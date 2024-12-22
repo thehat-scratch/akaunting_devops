@@ -1,5 +1,6 @@
 stages:
   - terraform
+  - terrascan
   - test
   - check_secret
   - build_image
@@ -73,7 +74,7 @@ php_test:
        - composer.lock 
 
 terrascan:
-  stage: terraform
+  stage: terrascan
   before_script:
     - apt update && apt install -y curl tar  # Ensure curl and tar are installed
     - |
